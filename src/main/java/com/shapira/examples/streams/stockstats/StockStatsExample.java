@@ -10,6 +10,7 @@ import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
@@ -44,19 +45,27 @@ public class StockStatsExample {
 
         KStreamBuilder builder = new KStreamBuilder();
 
+        //StreamsBuilder builder = new StreamsBuilder();
+
         KStream<String, Trade> source = builder.stream(Constants.STOCK_TOPIC);
 
-        KStream<TickerWindow, TradeStats> stats = source.groupByKey()
-                .aggregate(TradeStats::new,
-                    (k, v, tradestats) -> tradestats.add(v),
-                    TimeWindows.of(5000).advanceBy(1000),
-                    new TradeStatsSerde(),
-                    "trade-stats-store")
-                .toStream((key, value) -> new TickerWindow(key.key(), key.window().start()))
-                .mapValues((trade) -> trade.computeAvgPrice());
+        // 时间窗口作为主键 聚合结果作为值
+        KStream<TickerWindow, TradeStats> stats = source.groupByKey()  //它会确保事件流按照记录的键进行分区。因 为 在写数据时使用了键 ， 而且在调用 groupByKey() 方法之前不会对键进行修改，数据仍 然是按照它们的键进行分区 的 ， 所以说这个方法不会做任何事情
+                .aggregate(
+                        TradeStats::new,                         // 这个方法的第二个参数是一个新的对象，用于存放聚合的结果
+                        (k, v, tradestats) -> tradestats.add(v), // add方怯用于更新窗口内的最低价格、 交易数量和总价 。
+                        TimeWindows.of(5000).advanceBy(1000),    // 定义了 5s (5000ms)的时间窗口，井且每秒钟都会向前滑动。
+                        new TradeStatsSerde(),                   // 序列化和反序列化结果
+                    "trade-stats-store"        // 参数就是本地状态存储的名字，它可以是任意具有唯一性 的名字。
+                )//聚合结果是一个表，包含了股票信息，并使用时间窗口作为主键、聚合结果作为值。它表示一条记录，以及从变更流中计算得出的特定状态
+
+                .toStream((key, value) -> new TickerWindow(key.key(), key.window().start())) //将表重新转成事件流，不过不再使用整个时间窗口作为键，而是
+                                                                        //使用一个包含了股票信息和时间窗口起始时间的对象。toStream方法将表转成一个流，
+                                                                         //并将键转成TickerWindow 对象
+                .mapValues((trade) -> trade.computeAvgPrice()); //最后一步是更新平均价格。现在，聚合结果里包含了总价和交易数量。 遍历所有的记
+                                                                // 录 ，井使用现有的统计信息计算平均价格，然后把它写到输出流里。
 
         stats.to(new TickerWindowSerde(), new TradeStatsSerde(),  "stockstats-output");
-
 
         KafkaStreams streams = new KafkaStreams(builder, props);
 
@@ -66,9 +75,9 @@ public class StockStatsExample {
 
         // usually the stream application would be running forever,
         // in this example we just let it run for some time and stop since the input data is finite.
-        Thread.sleep(60000L);
+        //Thread.sleep(60000L);
 
-        streams.close();
+        //streams.close();
 
     }
 

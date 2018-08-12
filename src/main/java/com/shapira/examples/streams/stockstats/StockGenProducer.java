@@ -74,6 +74,7 @@ public class StockGenProducer {
                 ProducerRecord<String, Trade> record = new ProducerRecord<>(Constants.STOCK_TOPIC, ticker, trade);
 
                 producer.send(record, (RecordMetadata r, Exception e) -> {
+                    System.out.println("send ticker success:" + trade.toString());
                     if (e != null) {
                         System.out.println("Error producing to topic " + r.topic());
                         e.printStackTrace();
