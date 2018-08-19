@@ -18,7 +18,7 @@ public class TradeStats {
      * @return
      */
     public TradeStats add(Trade trade) {
-
+        System.out.println(">>>>> = " + trade.toString());
         if (trade.type == null || trade.ticker == null)
             throw new IllegalArgumentException("Invalid trade to aggregate: " + trade.toString());
 
@@ -38,6 +38,7 @@ public class TradeStats {
         this.countTrades = this.countTrades+1;
         this.sumPrice = this.sumPrice + trade.price;
         this.minPrice = this.minPrice < trade.price ? this.minPrice : trade.price;
+        System.out.println(">>>>> = " + this.toString());
 
         return this;
     }
@@ -45,5 +46,17 @@ public class TradeStats {
     public TradeStats computeAvgPrice() {
         this.avgPrice = this.sumPrice / this.countTrades;
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return "TradeStats{" +
+                "type='" + type + '\'' +
+                ", ticker='" + ticker + '\'' +
+                ", countTrades=" + countTrades +
+                ", sumPrice=" + sumPrice +
+                ", minPrice=" + minPrice +
+                ", avgPrice=" + avgPrice +
+                '}';
     }
 }

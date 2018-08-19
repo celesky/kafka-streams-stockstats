@@ -38,6 +38,9 @@ public class StockStatsExample {
         // https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Streams+Application+Reset+Tool
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
+        System.out.println(" KEY_SERDE_CLASS_CONFIG = " + props.getProperty(StreamsConfig.KEY_SERDE_CLASS_CONFIG));
+        System.out.println(" VALUE_SERDE_CLASS_CONFIG = " + props.getProperty(StreamsConfig.VALUE_SERDE_CLASS_CONFIG));
+
         // work-around for an issue around timing of creating internal topics
         // this was resolved in 0.10.2.0 and above
         // don't use in large production apps - this increases network load

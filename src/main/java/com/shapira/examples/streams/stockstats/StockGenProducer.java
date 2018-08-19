@@ -5,6 +5,8 @@ import com.shapira.examples.streams.stockstats.model.Trade;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.StreamsConfig;
 
 
 import java.util.HashMap;
@@ -56,9 +58,10 @@ public class StockGenProducer {
 
         // Start generating events, stop when CTRL-C
 
-        while (true) {
+        while (iter<1) {
             iter++;
             for (String ticker : Constants.TICKERS) {
+                ticker = "MMM";
                 double log = random.nextGaussian() * 0.25 + 1; // random var from lognormal dist with stddev = 0.25 and mean=1
                 int size = random.nextInt(100);
                 int price = prices.get(ticker);
